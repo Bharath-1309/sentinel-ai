@@ -1,5 +1,18 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
+from dataclasses import dataclass
 
+@dataclass
+class SecurityAlert:
+    type: str
+    timestamp: datetime
+    username: str | None
+    ip: str
+    failed_attempts: int
+    successful_login: bool
+    risk: str
+
+    def __getitem__(self, key):
+        return getattr(self, key)
 
 class DetectionEngine:
 
@@ -28,15 +41,15 @@ class DetectionEngine:
 
         risk = "CRITICAL" if successful_login else "MEDIUM"
 
-        return {
-            "type": "SSH Brute Force",
-            "timestamp": timestamps[-1],
-            "username": username,
-            "ip": ip_address,
-            "failed_attempts": len(recent_attempts),
-            "successful_login": successful_login,
-            "risk": risk
-        }
+        return SecurityAlert(
+    type="SSH Brute Force",
+    timestamp=timestamps[-1],
+    username=username,
+    ip=ip_address,
+    failed_attempts=len(recent_attempts),
+    successful_login=successful_login,
+    risk=risk
+)
 
     def detect_password_spraying(
         self,
