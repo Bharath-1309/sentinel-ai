@@ -137,6 +137,12 @@ def analyze_logs(log_file=LOG_FILE):
     if alert:
         alerts.append(alert)
 
+    correlations = correlation_engine.correlate(alerts)
+    incidents = [
+        incident_manager.create_incident(correlation)
+        for correlation in correlations
+    ]
+
     print("\n=== SUSPICIOUS ROOT LOGINS ===")
 
     for login in suspicious_root_logins:
@@ -155,7 +161,10 @@ def analyze_logs(log_file=LOG_FILE):
         print(f"Successful login: {alert['successful_login']}")
         print()
 
-    return alerts
+    return {
+    "alerts": alerts,
+    "incidents": incidents
+}
 
 if __name__ == "__main__":
     analyze_logs()

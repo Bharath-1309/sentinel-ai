@@ -9,7 +9,8 @@ from analyzer.detection_engine import DetectionEngine
 
 
 def test_ssh_brute_force_detection():
-    alerts = analyze_logs()
+    result = analyze_logs()
+    alerts = result["alerts"]
 
     assert len(alerts) == 2
 
@@ -26,7 +27,8 @@ def test_suspicious_root_login():
     analyze_logs()
 
 def test_brute_force_time_window():
-    alerts = analyze_logs("tests/time_window.log")
+    result = analyze_logs("tests/time_window.log")
+    alerts = result["alerts"]
 
     assert len(alerts) == 0
 
@@ -74,3 +76,20 @@ def test_password_spraying_detection():
     assert alert["ip"] == "10.10.10.50"
     assert alert["targeted_user_count"] == 3
     assert alert["risk"] == "HIGH"
+
+def test_incident_generation():
+    result = analyze_logs()
+
+    incidents = result["incidents"]
+
+    assert len(incidents) == 2
+
+    assert incidents[0]["type"] == "Potential Account Compromise"
+    assert incidents[0]["source_ip"] == "192.168.1.50"
+    assert incidents[0]["risk"] == "CRITICAL"
+    assert incidents[0]["status"] == "OPEN"
+
+    assert incidents[1]["type"] == "SSH Brute Force Incident"
+    assert incidents[1]["source_ip"] == "10.10.10.25"
+    assert incidents[1]["risk"] == "MEDIUM"
+    assert incidents[1]["status"] == "OPEN"
