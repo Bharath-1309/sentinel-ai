@@ -42,15 +42,20 @@ class DetectionEngine:
         self,
         ip_address,
         username_attempts,
-        threshold
+        threshold,
+        timestamp,
     ):
         if len(username_attempts) < threshold:
             return None
 
         return {
-            "type": "SSH Password Spraying",
-            "ip": ip_address,
-            "targeted_users": sorted(username_attempts),
-            "targeted_user_count": len(username_attempts),
-            "risk": "HIGH"
-        }
+    "type": "SSH Password Spraying",
+    "timestamp": timestamp,
+    "username": ", ".join(sorted(username_attempts)),
+    "ip": ip_address,
+    "failed_attempts": len(username_attempts),
+    "successful_login": False,
+    "targeted_users": sorted(username_attempts),
+    "targeted_user_count": len(username_attempts),
+    "risk": "HIGH"
+}

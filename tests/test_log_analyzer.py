@@ -65,7 +65,8 @@ def test_password_spraying_detection():
     alert = engine.detect_password_spraying(
         ip_address="10.10.10.50",
         username_attempts=username_attempts,
-        threshold=3
+        threshold=3,
+        timestamp=datetime(2026, 9, 15, 13, 0, 4)
     )
 
     assert alert is not None

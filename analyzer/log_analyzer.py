@@ -30,6 +30,7 @@ def analyze_logs(log_file=LOG_FILE):
     failed_attempts = {}
     successful_logins = []
     suspicious_root_logins = []
+    password_spray_attempts = {}
     last_event_time = {}
 
     with open(log_file, "r") as file:
@@ -46,6 +47,15 @@ def analyze_logs(log_file=LOG_FILE):
                 key = (username, ip_address)
 
                 timestamp = parse_timestamp(line)
+
+                if ip_address not in password_spray_attempts:
+                    password_spray_attempts[ip_address] = {
+                       "usernames": set(),
+                       "last_timestamp": timestamp
+              }
+
+                password_spray_attempts[ip_address]["usernames"].add(username)
+                password_spray_attempts[ip_address]["last_timestamp"] = timestamp
 
                 if key not in failed_attempts:
                    failed_attempts[key] = []
@@ -109,6 +119,16 @@ def analyze_logs(log_file=LOG_FILE):
            alerts.append(alert)
 
     print()
+    for ip_address, spray_data in password_spray_attempts.items():
+        alert = detection_engine.detect_password_spraying(
+            ip_address=ip_address,
+            username_attempts=spray_data["usernames"],
+            threshold=3,
+            timestamp=spray_data["last_timestamp"]
+    )
+
+    if alert:
+        alerts.append(alert)
 
     print("\n=== SUSPICIOUS ROOT LOGINS ===")
 
