@@ -26,6 +26,14 @@ class RiskEngine:
             elif alert["risk"] == "HIGH":
                 score += 10
 
+            threat_intelligence = alert.get(
+                "threat_intelligence"
+            )
+
+            if threat_intelligence:
+                if threat_intelligence.get("malicious"):
+                    score += 20
+
         score = min(score, 100)
 
         return {

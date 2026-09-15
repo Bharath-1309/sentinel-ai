@@ -52,3 +52,25 @@ def test_low_risk_for_no_alerts():
 
     assert result["score"] == 0
     assert result["risk"] == "LOW"
+
+def test_malicious_ip_increases_risk():
+
+    engine = RiskEngine()
+
+    alerts = [
+        {
+            "type": "SSH Brute Force",
+            "failed_attempts": 4,
+            "successful_login": False,
+            "risk": "MEDIUM",
+            "threat_intelligence": {
+                "malicious": True,
+                "confidence": 85
+            }
+        }
+    ]
+
+    result = engine.calculate_score(alerts)
+
+    assert result["score"] == 50
+    assert result["risk"] == "MEDIUM"    

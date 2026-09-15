@@ -42,3 +42,38 @@ def test_create_incident():
     assert incident["start_time"] == timestamp
     assert incident["end_time"] == timestamp
     assert len(incident["evidence"]) == 1
+
+    def test_incident_contains_mitre_techniques():
+
+        manager = IncidentManager()
+
+    timestamp = datetime(2026, 9, 15, 10, 21, 9)
+
+    correlation = {
+        "type": "Potential Account Compromise",
+        "source_ip": "192.168.1.50",
+        "risk": "CRITICAL",
+        "alert_count": 1,
+        "alerts": [
+            {
+                "type": "SSH Brute Force",
+                "timestamp": timestamp,
+                "username": "admin",
+                "ip": "192.168.1.50",
+                "failed_attempts": 3,
+                "successful_login": True,
+                "risk": "CRITICAL",
+                "mitre": {
+                    "technique_id": "T1110",
+                    "technique": "Brute Force",
+                    "tactic": "Credential Access"
+                }
+            }
+        ]
+    }
+
+    incident = manager.create_incident(correlation)
+
+    assert len(incident["mitre_techniques"]) == 1
+    assert incident["mitre_techniques"][0]["technique_id"] == "T1110"
+    assert incident["mitre_techniques"][0]["technique"] == "Brute Force"

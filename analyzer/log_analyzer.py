@@ -3,6 +3,8 @@ import re
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
+from analyzer.mitre_mapper import MitreMapper
+from analyzer.threat_intel import ThreatIntelligence
 
 try:
     from analyzer.detection_engine import DetectionEngine
@@ -37,6 +39,8 @@ def analyze_logs(log_file=LOG_FILE):
     correlation_engine = CorrelationEngine()
     incident_manager = IncidentManager()
     risk_engine = RiskEngine()
+    mitre_mapper = MitreMapper()
+    threat_intel = ThreatIntelligence()
     failed_attempts = {}
     successful_logins = []
     suspicious_root_logins = []
@@ -138,6 +142,16 @@ def analyze_logs(log_file=LOG_FILE):
         if alert:
             alerts.append(alert)
 
+        alerts = [
+            mitre_mapper.map_alert(alert)
+            for alert in alerts
+        ]
+
+    for alert in alerts:
+        alert.threat_intelligence = threat_intel.lookup_ip(
+        alert["ip"]
+    )
+
     correlations = correlation_engine.correlate(alerts)
     incidents = []
 
@@ -152,6 +166,28 @@ def analyze_logs(log_file=LOG_FILE):
         incident["risk"] = risk_result["risk"]
 
         incidents.append(incident)
+
+    print("\n=== SECURITY INCIDENTS ===")
+
+    for incident in incidents:
+        print(f"[{incident['risk']}] {incident['type']}")
+        print(f"Incident ID: {incident['incident_id']}")
+        print(f"Source IP: {incident['source_ip']}")
+        print(f"Risk Score: {incident['risk_score']}/100")
+        print(f"Status: {incident['status']}")
+        print(f"Alerts Correlated: {incident['alert_count']}")
+
+        print("MITRE ATT&CK:")
+        for technique in incident["mitre_techniques"]:
+            print(
+                f"  {technique['technique_id']} - "
+                f"{technique['technique']} "
+                f"({technique['tactic']})"
+    )
+
+        print(f"Start: {incident['start_time']}")
+        print(f"End: {incident['end_time']}")
+        print()
 
     print("\n=== SUSPICIOUS ROOT LOGINS ===")
 
@@ -169,6 +205,15 @@ def analyze_logs(log_file=LOG_FILE):
         print(f"Source IP: {alert['ip']}")
         print(f"Failed attempts: {alert['failed_attempts']}")
         print(f"Successful login: {alert['successful_login']}")
+        print(f"MITRE Technique: {alert['mitre']['technique_id']} - {alert['mitre']['technique']}")
+        print(f"MITRE Tactic: {alert['mitre']['tactic']}")
+        ti = alert["threat_intelligence"]
+
+        print(f"Threat Intelligence:")
+        print(f"  Malicious: {'YES' if ti['malicious'] else 'NO'}")
+        print(f"  Threat: {ti['threat'] or 'None'}")
+        print(f"  Confidence: {ti['confidence']}%")
+        print(f"  Source: {ti['source']}")
         print()
 
     return {

@@ -93,3 +93,31 @@ def test_incident_generation():
     assert incidents[1]["source_ip"] == "10.10.10.25"
     assert incidents[1]["risk"] == "MEDIUM"
     assert incidents[1]["status"] == "OPEN"
+
+def test_password_spraying_returns_security_alert():
+
+    engine = DetectionEngine()
+
+    alert = engine.detect_password_spraying(
+        ip_address="10.10.10.50",
+        username_attempts={"admin", "root", "testuser"},
+        threshold=3,
+        timestamp=datetime(2026, 9, 15, 13, 0, 4)
+    )
+
+    assert isinstance(alert, type(
+        engine.detect_brute_force(
+            username="test",
+            ip_address="10.0.0.1",
+            timestamps=[
+                datetime(2026, 9, 15, 10, 0, 0),
+                datetime(2026, 9, 15, 10, 0, 1),
+                datetime(2026, 9, 15, 10, 0, 2)
+            ],
+            threshold=3,
+            window_minutes=5
+        )
+    ))
+
+    assert alert["targeted_users"] == ["admin", "root", "testuser"]
+    assert alert["targeted_user_count"] == 3    

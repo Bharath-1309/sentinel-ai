@@ -1,6 +1,3 @@
-from datetime import datetime
-
-
 class IncidentManager:
 
     def create_incident(self, correlation):
@@ -15,6 +12,14 @@ class IncidentManager:
         start_time = min(timestamps) if timestamps else None
         end_time = max(timestamps) if timestamps else None
 
+        mitre_techniques = []
+
+        for alert in alerts:
+            mitre = alert.get("mitre")
+
+            if mitre and mitre not in mitre_techniques:
+                mitre_techniques.append(mitre)
+
         return {
             "incident_id": self._generate_incident_id(start_time),
             "type": correlation["type"],
@@ -24,6 +29,7 @@ class IncidentManager:
             "start_time": start_time,
             "end_time": end_time,
             "status": "OPEN",
+            "mitre_techniques": mitre_techniques,
             "evidence": alerts
         }
 
