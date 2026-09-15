@@ -1,6 +1,6 @@
 import re
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -8,10 +8,12 @@ try:
     from analyzer.detection_engine import DetectionEngine
     from analyzer.correlation_engine import CorrelationEngine
     from analyzer.incident_manager import IncidentManager
+    from analyzer.risk_engine import RiskEngine
 except ModuleNotFoundError:
     from detection_engine import DetectionEngine
     from correlation_engine import CorrelationEngine
     from incident_manager import IncidentManager
+    from risk_engine import RiskEngine
 import os
 
 BASE_DIR = Path(__file__).parent.parent
@@ -34,11 +36,11 @@ def analyze_logs(log_file=LOG_FILE):
     detection_engine = DetectionEngine()
     correlation_engine = CorrelationEngine()
     incident_manager = IncidentManager()
+    risk_engine = RiskEngine()
     failed_attempts = {}
     successful_logins = []
     suspicious_root_logins = []
     password_spray_attempts = {}
-    last_event_time = {}
 
     with open(log_file, "r") as file:
         for line in file:
@@ -59,7 +61,7 @@ def analyze_logs(log_file=LOG_FILE):
                     password_spray_attempts[ip_address] = {
                        "usernames": set(),
                        "last_timestamp": timestamp
-              }
+                    }
 
                 password_spray_attempts[ip_address]["usernames"].add(username)
                 password_spray_attempts[ip_address]["last_timestamp"] = timestamp
@@ -68,7 +70,6 @@ def analyze_logs(log_file=LOG_FILE):
                    failed_attempts[key] = []
 
                 failed_attempts[key].append(timestamp)
-                last_event_time[key] = timestamp
 
             success_match = re.search(
                 r"Accepted password for (\w+) from ([\d.]+)",
@@ -132,16 +133,25 @@ def analyze_logs(log_file=LOG_FILE):
             username_attempts=spray_data["usernames"],
             threshold=3,
             timestamp=spray_data["last_timestamp"]
-    )
+        )
 
-    if alert:
-        alerts.append(alert)
+        if alert:
+            alerts.append(alert)
 
     correlations = correlation_engine.correlate(alerts)
-    incidents = [
-        incident_manager.create_incident(correlation)
-        for correlation in correlations
-    ]
+    incidents = []
+
+    for correlation in correlations:
+        incident = incident_manager.create_incident(correlation)
+
+        risk_result = risk_engine.calculate_score(
+            correlation["alerts"]
+        )
+
+        incident["risk_score"] = risk_result["score"]
+        incident["risk"] = risk_result["risk"]
+
+        incidents.append(incident)
 
     print("\n=== SUSPICIOUS ROOT LOGINS ===")
 
@@ -162,9 +172,9 @@ def analyze_logs(log_file=LOG_FILE):
         print()
 
     return {
-    "alerts": alerts,
-    "incidents": incidents
-}
+        "alerts": alerts,
+        "incidents": incidents
+    }
 
 if __name__ == "__main__":
     analyze_logs()
