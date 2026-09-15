@@ -1,5 +1,6 @@
 import re
 
+from datetime import datetime, timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 import os
@@ -13,16 +14,20 @@ FAILED_ATTEMPT_THRESHOLD = int(os.getenv("FAILED_ATTEMPT_THRESHOLD", "3"))
 ALERT_WINDOW_MINUTES = int(os.getenv("ALERT_WINDOW_MINUTES", "5"))
 
 def parse_timestamp(line):
-    return line[:15]
+    timestamp = line[:15]
+    return datetime.strptime(
+        f"{datetime.now().year} {timestamp}",
+        "%Y %b %d %H:%M:%S"
+    )
 
-def analyze_logs():
+def analyze_logs(log_file=LOG_FILE):
     alerts = []
     failed_attempts = {}
     successful_logins = []
     suspicious_root_logins = []
     last_event_time = {}
 
-    with open(LOG_FILE, "r") as file:
+    with open(log_file, "r") as file:
         for line in file:
             failed_match = re.search(
                 r"Failed password for (\w+) from ([\d.]+)",
@@ -35,8 +40,13 @@ def analyze_logs():
 
                 key = (username, ip_address)
 
-                failed_attempts[key] = failed_attempts.get(key, 0) + 1
-                last_event_time[key] = parse_timestamp(line)
+                timestamp = parse_timestamp(line)
+
+                if key not in failed_attempts:
+                   failed_attempts[key] = []
+
+                failed_attempts[key].append(timestamp)
+                last_event_time[key] = timestamp
 
             success_match = re.search(
                 r"Accepted password for (\w+) from ([\d.]+)",
@@ -60,7 +70,12 @@ def analyze_logs():
     print("=== SENTINELAI LOG ANALYSIS ===")
     print()
 
-    for (username, ip), attempts in failed_attempts.items():
+    for (username, ip), timestamps in failed_attempts.items():
+        window_start = timestamps[-1] - timedelta(minutes=ALERT_WINDOW_MINUTES)
+        attempts = sum(
+            1 for timestamp in timestamps
+            if timestamp >= window_start
+        )
         print(f"User: {username}")
         print(f"IP: {ip}")
         print(f"Failed attempts: {attempts}")

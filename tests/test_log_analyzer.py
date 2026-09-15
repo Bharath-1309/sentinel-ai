@@ -10,8 +10,9 @@ def test_ssh_brute_force_detection():
     alerts = analyze_logs()
 
     assert len(alerts) == 2
-    assert alerts[0]["timestamp"] == "Sep 15 10:21:09"
-    assert alerts[1]["timestamp"] == "Sep 15 11:05:27"
+
+    assert alerts[0]["timestamp"].strftime("%b %d %H:%M:%S") == "Sep 15 10:21:09"
+    assert alerts[1]["timestamp"].strftime("%b %d %H:%M:%S") == "Sep 15 11:05:27"
 
     assert alerts[0]["type"] == "SSH Brute Force"
     assert alerts[0]["risk"] == "CRITICAL"
@@ -21,3 +22,8 @@ def test_ssh_brute_force_detection():
 
 def test_suspicious_root_login():
     analyze_logs()
+
+def test_brute_force_time_window():
+    alerts = analyze_logs("tests/time_window.log")
+
+    assert len(alerts) == 0
