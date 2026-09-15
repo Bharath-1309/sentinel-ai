@@ -1,0 +1,8 @@
+Sep 15 10:21:01 server sshd[1234]: Failed password for admin from 192.168.1.50
+Sep 15 10:21:05 server sshd[1235]: Failed password for admin from 192.168.1.50
+Sep 15 10:21:09 server sshd[1236]: Failed password for admin from 192.168.1.50
+Sep 15 10:21:15 server sshd[1237]: Accepted password for admin from 192.168.1.50
+Sep 15 11:05:21 server sshd[2001]: Failed password for root from 10.10.10.25
+Sep 15 11:05:23 server sshd[2002]: Failed password for root from 10.10.10.25
+Sep 15 11:05:25 server sshd[2003]: Failed password for root from 10.10.10.25
+Sep 15 11:05:27 server sshd[2004]: Failed password for root from 10.10.10.25
