@@ -1,9 +1,11 @@
 import sys
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from analyzer.log_analyzer import analyze_logs
+from analyzer.detection_engine import DetectionEngine
 
 
 def test_ssh_brute_force_detection():
@@ -27,3 +29,26 @@ def test_brute_force_time_window():
     alerts = analyze_logs("tests/time_window.log")
 
     assert len(alerts) == 0
+
+def test_detection_engine_brute_force():
+    engine = DetectionEngine()
+
+    timestamps = [
+        datetime(2026, 9, 15, 10, 21, 1),
+        datetime(2026, 9, 15, 10, 21, 5),
+        datetime(2026, 9, 15, 10, 21, 9)
+    ]
+
+    alert = engine.detect_brute_force(
+        username="admin",
+        ip_address="192.168.1.50",
+        timestamps=timestamps,
+        threshold=3,
+        window_minutes=5,
+        successful_login=True
+    )
+
+    assert alert is not None
+    assert alert["type"] == "SSH Brute Force"
+    assert alert["risk"] == "CRITICAL"
+    assert alert["failed_attempts"] == 3
