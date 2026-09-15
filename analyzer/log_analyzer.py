@@ -3,6 +3,10 @@ import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from dotenv import load_dotenv
+try:
+    from analyzer.detection_engine import DetectionEngine
+except ModuleNotFoundError:
+    from detection_engine import DetectionEngine
 import os
 
 BASE_DIR = Path(__file__).parent.parent
@@ -22,6 +26,7 @@ def parse_timestamp(line):
 
 def analyze_logs(log_file=LOG_FILE):
     alerts = []
+    detection_engine = DetectionEngine()
     failed_attempts = {}
     successful_logins = []
     suspicious_root_logins = []
@@ -71,10 +76,19 @@ def analyze_logs(log_file=LOG_FILE):
     print()
 
     for (username, ip), timestamps in failed_attempts.items():
-        window_start = timestamps[-1] - timedelta(minutes=ALERT_WINDOW_MINUTES)
-        attempts = sum(
-            1 for timestamp in timestamps
-            if timestamp >= window_start
+        alert = detection_engine.detect_brute_force(
+            username=username,
+            ip_address=ip,
+            timestamps=timestamps,
+            threshold=FAILED_ATTEMPT_THRESHOLD,
+            window_minutes=ALERT_WINDOW_MINUTES,
+            successful_login=(username, ip) in successful_logins
+        )
+
+        attempts = (
+            alert["failed_attempts"]
+            if alert
+            else 0
         )
         print(f"User: {username}")
         print(f"IP: {ip}")
@@ -84,27 +98,17 @@ def analyze_logs(log_file=LOG_FILE):
 
         print(f"Successful login: {'YES' if successful else 'NO'}")
 
-        if attempts >= FAILED_ATTEMPT_THRESHOLD and successful:
-            risk = "CRITICAL"
-        elif attempts >= FAILED_ATTEMPT_THRESHOLD:
-            risk = "MEDIUM"
+        if alert:
+            risk = alert["risk"]
         else:
             risk = "LOW"
 
         print(f"Risk: {risk}")
 
-        if risk in ["CRITICAL", "HIGH", "MEDIUM"]:
-            alerts.append({
-               "type": "SSH Brute Force",
-               "timestamp": last_event_time[(username, ip)],
-                "username": username,
-                "ip": ip,
-                "failed_attempts": attempts,
-                "successful_login": successful,
-                "risk": risk
-            })
+        if alert:
+           alerts.append(alert)
 
-        print()
+    print()
 
     print("\n=== SUSPICIOUS ROOT LOGINS ===")
 
