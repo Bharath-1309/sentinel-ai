@@ -3,10 +3,15 @@ import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from dotenv import load_dotenv
+
 try:
     from analyzer.detection_engine import DetectionEngine
+    from analyzer.correlation_engine import CorrelationEngine
+    from analyzer.incident_manager import IncidentManager
 except ModuleNotFoundError:
     from detection_engine import DetectionEngine
+    from correlation_engine import CorrelationEngine
+    from incident_manager import IncidentManager
 import os
 
 BASE_DIR = Path(__file__).parent.parent
@@ -27,6 +32,8 @@ def parse_timestamp(line):
 def analyze_logs(log_file=LOG_FILE):
     alerts = []
     detection_engine = DetectionEngine()
+    correlation_engine = CorrelationEngine()
+    incident_manager = IncidentManager()
     failed_attempts = {}
     successful_logins = []
     suspicious_root_logins = []
