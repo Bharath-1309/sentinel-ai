@@ -37,3 +37,20 @@ class DetectionEngine:
             "successful_login": successful_login,
             "risk": risk
         }
+
+    def detect_password_spraying(
+        self,
+        ip_address,
+        username_attempts,
+        threshold
+    ):
+        if len(username_attempts) < threshold:
+            return None
+
+        return {
+            "type": "SSH Password Spraying",
+            "ip": ip_address,
+            "targeted_users": sorted(username_attempts),
+            "targeted_user_count": len(username_attempts),
+            "risk": "HIGH"
+        }

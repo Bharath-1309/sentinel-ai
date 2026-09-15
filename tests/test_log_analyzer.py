@@ -52,3 +52,24 @@ def test_detection_engine_brute_force():
     assert alert["type"] == "SSH Brute Force"
     assert alert["risk"] == "CRITICAL"
     assert alert["failed_attempts"] == 3
+
+def test_password_spraying_detection():
+    engine = DetectionEngine()
+
+    username_attempts = {
+        "admin",
+        "root",
+        "testuser"
+    }
+
+    alert = engine.detect_password_spraying(
+        ip_address="10.10.10.50",
+        username_attempts=username_attempts,
+        threshold=3
+    )
+
+    assert alert is not None
+    assert alert["type"] == "SSH Password Spraying"
+    assert alert["ip"] == "10.10.10.50"
+    assert alert["targeted_user_count"] == 3
+    assert alert["risk"] == "HIGH"
