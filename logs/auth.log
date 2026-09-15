@@ -6,3 +6,4 @@ Sep 15 11:05:21 server sshd[2001]: Failed password for root from 10.10.10.25
 Sep 15 11:05:23 server sshd[2002]: Failed password for root from 10.10.10.25
 Sep 15 11:05:25 server sshd[2003]: Failed password for root from 10.10.10.25
 Sep 15 11:05:27 server sshd[2004]: Failed password for root from 10.10.10.25
+Sep 15 11:20:10 server sshd[3001]: Accepted password for root from 10.10.10.30

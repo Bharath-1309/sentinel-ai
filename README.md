@@ -16,3 +16,4 @@ The current system analyzes SSH authentication logs and detects suspicious login
 - Track usernames
 - Calculate a basic risk level
 - Automated testing with pytest
+- Detect suspicious root logins

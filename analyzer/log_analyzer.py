@@ -10,12 +10,16 @@ load_dotenv(BASE_DIR / ".env")
 
 LOG_FILE = BASE_DIR / "logs" / "auth.log"
 FAILED_ATTEMPT_THRESHOLD = int(os.getenv("FAILED_ATTEMPT_THRESHOLD", "3"))
+ALERT_WINDOW_MINUTES = int(os.getenv("ALERT_WINDOW_MINUTES", "5"))
 
+def parse_timestamp(line):
+    return line[:15]
 
 def analyze_logs():
     alerts = []
     failed_attempts = {}
     successful_logins = []
+    suspicious_root_logins = []
     last_event_time = {}
 
     with open(LOG_FILE, "r") as file:
@@ -32,7 +36,7 @@ def analyze_logs():
                 key = (username, ip_address)
 
                 failed_attempts[key] = failed_attempts.get(key, 0) + 1
-                last_event_time[key] = line[:15]
+                last_event_time[key] = parse_timestamp(line)
 
             success_match = re.search(
                 r"Accepted password for (\w+) from ([\d.]+)",
@@ -46,6 +50,12 @@ def analyze_logs():
                 successful_logins.append(
                     (username, ip_address)
                 )
+                if username == "root":
+                    suspicious_root_logins.append({
+                        "username": username,
+                        "ip": ip_address,
+                        "timestamp": parse_timestamp(line)
+                    })
 
     print("=== SENTINELAI LOG ANALYSIS ===")
     print()
@@ -60,7 +70,7 @@ def analyze_logs():
         print(f"Successful login: {'YES' if successful else 'NO'}")
 
         if attempts >= FAILED_ATTEMPT_THRESHOLD and successful:
-            risk = "HIGH"
+            risk = "CRITICAL"
         elif attempts >= FAILED_ATTEMPT_THRESHOLD:
             risk = "MEDIUM"
         else:
@@ -68,7 +78,7 @@ def analyze_logs():
 
         print(f"Risk: {risk}")
 
-        if risk in ["HIGH", "MEDIUM"]:
+        if risk in ["CRITICAL", "HIGH", "MEDIUM"]:
             alerts.append({
                "type": "SSH Brute Force",
                "timestamp": last_event_time[(username, ip)],
@@ -80,6 +90,14 @@ def analyze_logs():
             })
 
         print()
+
+    print("\n=== SUSPICIOUS ROOT LOGINS ===")
+
+    for login in suspicious_root_logins:
+        print(f"Time: {login['timestamp']}")
+        print(f"User: {login['username']}")
+        print(f"Source IP: {login['ip']}")
+
     print("=== SECURITY ALERTS ===")
 
     for alert in alerts:
@@ -91,7 +109,7 @@ def analyze_logs():
         print(f"Successful login: {alert['successful_login']}")
         print()
 
-    return alerts    
+    return alerts
 
 if __name__ == "__main__":
     analyze_logs()
