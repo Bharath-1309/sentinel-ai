@@ -182,3 +182,15 @@ def test_invalid_message_type():
         assert False
     except TypeError:
         assert True
+
+def test_phishing_intelligence_output():
+
+    detector = PhishingDetector()
+
+    result = detector.analyze(
+        "Urgent! Visit https://evil.example.com/login"
+    )
+
+    assert "intelligence" in result
+    assert "https://evil.example.com/login" in result["intelligence"]["urls"]
+    assert "evil.example.com" in result["intelligence"]["domains"] 

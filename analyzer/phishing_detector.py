@@ -1,6 +1,6 @@
 import re
 from urllib.parse import unquote, urlparse
-
+from analyzer.phishing_intel import PhishingIntelligence
 
 class PhishingDetector:
 
@@ -8,6 +8,8 @@ class PhishingDetector:
     # This is intentionally small; enterprise deployments
     # should eventually use configurable organization/domain
     # intelligence rather than a hardcoded list.
+    intelligence = PhishingIntelligence()
+
     TRUSTED_DOMAINS = {
         "google.com",
         "microsoft.com",
@@ -335,6 +337,7 @@ class PhishingDetector:
             raise TypeError("message must be a string")
 
         message_lower = message.lower()
+        intelligence = self.intelligence.extract_indicators(message)
 
         matched_keywords = [
             keyword
@@ -520,5 +523,6 @@ class PhishingDetector:
             "matched_keywords": matched_keywords,
             "message_indicators": message_indicators,
             "urls_found": urls,
+            "intelligence": intelligence,
             "suspicious_urls": suspicious_urls
         }
