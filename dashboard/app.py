@@ -12,6 +12,117 @@ st.caption("AI-Powered SOC Investigation & Incident Response Platform")
 
 API_URL = "http://127.0.0.1:8000/analyze"
 
+st.divider()
+
+st.subheader("Phishing Analysis")
+
+phishing_message = st.text_area(
+    "Enter an email, message, or URL to analyze",
+    placeholder="Example: Urgent! Verify your account at https://example.com/login"
+)
+
+if st.button("Analyze for Phishing"):
+    if not phishing_message.strip():
+        st.warning("Please enter a message to analyze.")
+    else:
+        try:
+            response = requests.post(
+                "http://127.0.0.1:8000/phishing/analyze",
+                json={"message": phishing_message},
+                timeout=30
+            )
+
+            response.raise_for_status()
+
+            phishing_result = response.json()
+
+            st.success("Phishing analysis completed.")
+
+            col1, col2, col3 = st.columns(3)
+
+            col1.metric(
+                "Risk",
+                phishing_result["risk"]
+            )
+
+            col2.metric(
+                "Risk Score",
+                phishing_result["risk_score"]
+            )
+
+            col3.metric(
+                "Phishing Detected",
+                "YES" if phishing_result["is_phishing"] else "NO"
+            )
+
+            st.write("**Detection Evidence:**")
+
+            matched_keywords = phishing_result.get(
+                "matched_keywords",
+                []
+            )
+
+            if matched_keywords:
+                st.markdown("**Suspicious Content Indicators:**")
+
+                for keyword in matched_keywords:
+                    st.write(f"- {keyword}")
+
+            message_indicators = phishing_result.get(
+                "message_indicators",
+                {}
+            )
+
+            credential_requests = message_indicators.get(
+                "credential_requests",
+                []
+            )
+
+            financial_requests = message_indicators.get(
+                "financial_requests",
+                []
+            )
+
+            urgency_indicators = message_indicators.get(
+                "urgency_indicators",
+                []
+            )
+
+            if credential_requests:
+                st.markdown("**Credential Indicators:**")
+
+                for indicator in credential_requests:
+                    st.write(f"- {indicator}")
+
+            if financial_requests:
+                st.markdown("**Financial Indicators:**")
+
+                for indicator in financial_requests:
+                    st.write(f"- {indicator}")
+
+            if urgency_indicators:
+                st.markdown("**Urgency Indicators:**")
+
+                for indicator in urgency_indicators:
+                    st.write(f"- {indicator}")
+
+            for url in phishing_result.get(
+                "suspicious_urls",
+                []
+            ):
+
+                st.markdown(
+                    f"**Suspicious URL:** `{url['url']}`"
+                )
+
+                for reason in url.get("reasons", []):
+                    st.write(f"- {reason}")
+
+        except requests.RequestException as error:
+            st.error(
+                f"Unable to connect to SentinelAI API: {error}"
+            )
+
 if st.button("Run Security Analysis", type="primary"):
 
     try:

@@ -1,6 +1,8 @@
 from fastapi import FastAPI
+from pydantic import BaseModel
 
 from analyzer.log_analyzer import analyze_logs
+from analyzer.phishing_detector import PhishingDetector
 from api_models import AnalysisResponse
 
 
@@ -57,3 +59,14 @@ def analyze():
             for incident in result["incidents"]
         ]
     }
+
+class PhishingRequest(BaseModel):
+    message: str
+
+
+@app.post("/phishing/analyze")
+def analyze_phishing(request: PhishingRequest):
+
+    detector = PhishingDetector()
+
+    return detector.analyze(request.message)
