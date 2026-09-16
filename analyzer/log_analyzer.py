@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from analyzer.mitre_mapper import MitreMapper
 from analyzer.threat_intel import ThreatIntelligence
 from analyzer.ai_agent import AISOCAgent
+from analyzer.windows_auth_detector import WindowsAuthDetector
 
 try:
     from analyzer.detection_engine import DetectionEngine
@@ -34,9 +35,31 @@ def parse_timestamp(line):
         "%Y %b %d %H:%M:%S"
     )
 
+def parse_windows_auth_line(line):
+    match = re.search(
+        r"(\d{4} \w{3} \d{2} \d{2}:\d{2}:\d{2}) "
+        r"Failed Windows login for (\w+) from ([\d.]+)",
+        line
+    )
+
+    if not match:
+        return None
+
+    timestamp = datetime.strptime(
+        match.group(1),
+        "%Y %b %d %H:%M:%S"
+    )
+
+    return {
+        "username": match.group(2),
+        "ip": match.group(3),
+        "timestamp": timestamp
+    }
+
 def analyze_logs(log_file=LOG_FILE):
     alerts = []
     detection_engine = DetectionEngine()
+    windows_auth_detector = WindowsAuthDetector()
     correlation_engine = CorrelationEngine()
     incident_manager = IncidentManager()
     risk_engine = RiskEngine()

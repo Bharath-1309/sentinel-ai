@@ -16,8 +16,9 @@ def test_windows_auth_brute_force_detection():
     assert alert is not None
     assert alert.type == "Windows Authentication Brute Force"
     assert alert.username == "administrator"
-    assert alert.source_ip == "192.168.1.50"
+    assert alert.ip == "192.168.1.50"
     assert alert.failed_attempts == 5
+    assert alert.successful_login is False
     assert alert.risk == "HIGH"
 
 
@@ -33,6 +34,7 @@ def test_windows_auth_brute_force_not_detected_below_threshold():
 
     assert alert is None
 
+
 def test_windows_auth_brute_force_critical_risk():
     detector = WindowsAuthDetector()
 
@@ -44,4 +46,4 @@ def test_windows_auth_brute_force_critical_risk():
     )
 
     assert alert is not None
-    assert alert.risk == "CRITICAL"    
+    assert alert.risk == "CRITICAL"

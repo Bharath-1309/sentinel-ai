@@ -7,9 +7,17 @@ class WindowsAuthAlert:
     type: str
     timestamp: datetime
     username: str | None
-    source_ip: str
+    ip: str
     failed_attempts: int
+    successful_login: bool
     risk: str
+    mitre: dict | None = None
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def get(self, key, default=None):
+        return getattr(self, key, default)
 
 
 class WindowsAuthDetector:
@@ -34,7 +42,8 @@ class WindowsAuthDetector:
             type="Windows Authentication Brute Force",
             timestamp=timestamp,
             username=username,
-            source_ip=source_ip,
+            ip=source_ip,
             failed_attempts=failed_attempts,
+            successful_login=False,
             risk=risk
         )
