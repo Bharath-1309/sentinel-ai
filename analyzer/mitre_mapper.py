@@ -16,6 +16,11 @@ class MitreMapper:
             "technique": "PowerShell",
             "tactic": "Execution"
         },
+        "Windows Authentication Brute Force": {
+            "technique_id": "T1110",
+            "technique": "Brute Force",
+            "tactic": "Credential Access"
+        },
     }
 
 

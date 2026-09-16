@@ -70,6 +70,7 @@ def analyze_logs(log_file=LOG_FILE):
     successful_logins = []
     suspicious_root_logins = []
     password_spray_attempts = {}
+    windows_failed_attempts = {}
 
     with open(log_file, "r") as file:
         for line in file:
@@ -99,6 +100,21 @@ def analyze_logs(log_file=LOG_FILE):
                    failed_attempts[key] = []
 
                 failed_attempts[key].append(timestamp)
+
+            windows_event = parse_windows_auth_line(line)
+
+            if windows_event:
+                key = (
+                    windows_event["username"],
+                    windows_event["ip"]
+                )
+
+                if key not in windows_failed_attempts:
+                    windows_failed_attempts[key] = []
+
+                windows_failed_attempts[key].append(
+                    windows_event["timestamp"]
+                )
 
             success_match = re.search(
                 r"Accepted password for (\w+) from ([\d.]+)",
@@ -156,6 +172,19 @@ def analyze_logs(log_file=LOG_FILE):
            alerts.append(alert)
 
     print()
+    for (username, ip_address), timestamps in windows_failed_attempts.items():
+        alert = windows_auth_detector.detect_brute_force(
+            username=username,
+            source_ip=ip_address,
+            failed_attempts=len(timestamps),
+            timestamp=timestamps[-1],
+            threshold=FAILED_ATTEMPT_THRESHOLD
+        )
+
+        if alert:
+            alerts.append(alert)       
+
+    print()
     for ip_address, spray_data in password_spray_attempts.items():
         alert = detection_engine.detect_password_spraying(
             ip_address=ip_address,
@@ -167,10 +196,10 @@ def analyze_logs(log_file=LOG_FILE):
         if alert:
             alerts.append(alert)
 
-        alerts = [
-            mitre_mapper.map_alert(alert)
-            for alert in alerts
-        ]
+    alerts = [
+        mitre_mapper.map_alert(alert)
+        for alert in alerts
+    ]
 
     for alert in alerts:
         alert.threat_intelligence = threat_intel.lookup_ip(
