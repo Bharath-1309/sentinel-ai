@@ -26,3 +26,33 @@ def test_ai_agent_creates_investigation_request():
     assert result["investigation_status"] == "COMPLETED"
     assert result["analysis"] is not None
     assert len(result["recommendations"]) > 0
+
+def test_ai_agent_generates_critical_recommendations():
+
+    agent = AISOCAgent()
+
+    incident = {
+        "incident_id": "INC-CRITICAL-001",
+        "type": "Potential Account Compromise",
+        "risk": "CRITICAL",
+        "source_ip": "192.168.1.50"
+    }
+
+    result = agent.investigate(incident)
+
+    assert result["investigation_status"] == "COMPLETED"
+
+    assert (
+        "immediate investigation"
+        in result["analysis"]
+    )
+
+    assert (
+        "Review the affected account activity."
+        in result["recommendations"]
+    )
+
+    assert (
+        "Check for additional successful authentication events."
+        in result["recommendations"]
+    )
