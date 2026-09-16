@@ -1,5 +1,7 @@
 import sys
 from pathlib import Path
+from datetime import datetime
+from analyzer.detection_engine import SecurityAlert
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -69,3 +71,23 @@ def test_unknown_alert_mitre_mapping():
     assert result["mitre"]["technique_id"] == "UNKNOWN"
     assert result["mitre"]["technique"] == "Unknown"
     assert result["mitre"]["tactic"] == "Unknown"
+
+def test_powershell_mitre_mapping():
+
+    mapper = MitreMapper()
+
+    alert = SecurityAlert(
+        type="Suspicious PowerShell",
+        timestamp=datetime.now(),
+        username="testuser",
+        ip="192.168.1.10",
+        failed_attempts=1,
+        successful_login=False,
+        risk="HIGH"
+    )
+
+    result = mapper.map_alert(alert)
+
+    assert result.mitre["technique_id"] == "T1059.001"
+    assert result.mitre["technique"] == "PowerShell"
+    assert result.mitre["tactic"] == "Execution"
