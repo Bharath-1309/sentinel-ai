@@ -51,3 +51,23 @@ def test_search_finds_password_spraying_knowledge():
         "password spraying" in result["content"].lower()
         for result in results
     )
+
+def test_search_finds_powershell_knowledge():
+
+    engine = RAGEngine()
+
+    results = engine.search(
+        "PowerShell execution"
+    )
+
+    assert len(results) >= 1
+
+    assert any(
+        result["source"] == "powershell_attacks.md"
+        for result in results
+    )
+
+    assert any(
+        "PowerShell" in result["content"]
+        for result in results
+    )    
