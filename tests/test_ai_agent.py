@@ -23,6 +23,6 @@ def test_ai_agent_creates_investigation_request():
     assert result["type"] == "Potential Account Compromise"
     assert result["risk"] == "CRITICAL"
     assert result["source_ip"] == "192.168.1.50"
-    assert result["investigation_status"] == "PENDING"
-    assert result["analysis"] is None
-    assert result["recommendations"] == []
+    assert result["investigation_status"] == "COMPLETED"
+    assert result["analysis"] is not None
+    assert len(result["recommendations"]) > 0
