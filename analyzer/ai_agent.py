@@ -1,5 +1,6 @@
 import os
 import requests
+from analyzer.rag_engine import RAGEngine
 
 from dotenv import load_dotenv
 
@@ -14,6 +15,7 @@ class AISOCAgent:
             "GEMINI_MODEL",
             "gemini-3.8-flash"
         )
+        self.rag = RAGEngine()
 
         self.api_url = (
             "https://generativelanguage.googleapis.com/"
@@ -25,6 +27,14 @@ class AISOCAgent:
         """
         Investigate a security incident using Gemini.
         """
+        rag_results = self.rag.search(
+            incident["type"]
+        )
+
+        rag_context = "\n\n".join(
+            result["content"]
+            for result in rag_results[:2]
+        )
 
         prompt = f"""
 You are an experienced SOC analyst.
@@ -35,6 +45,10 @@ Incident ID: {incident["incident_id"]}
 Incident Type: {incident["type"]}
 Risk Level: {incident["risk"]}
 Source IP: {incident["source_ip"]}
+
+Relevant cybersecurity knowledge retrieved from the RAG knowledge base:
+
+{rag_context}
 
 Provide:
 1. A concise investigation analysis.
