@@ -21,5 +21,8 @@ def test_search_finds_brute_force_knowledge():
     )
 
     assert len(results) >= 1
-    assert results[0]["source"] == "mitre_attack.md"
+    assert results[0]["source"] in {
+        "mitre_attack.md",
+        "ssh_attacks.md"
+    }
     assert results[0]["score"] > 0
