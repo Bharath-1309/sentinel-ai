@@ -32,7 +32,7 @@ class AISOCAgent:
         )
 
         rag_context = "\n\n".join(
-            result["content"]
+            f"Source: {result['source']}\n{result['content']}"
             for result in rag_results[:2]
         )
 
