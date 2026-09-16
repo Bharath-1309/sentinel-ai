@@ -5,6 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from analyzer.mitre_mapper import MitreMapper
 from analyzer.threat_intel import ThreatIntelligence
+from analyzer.ai_agent import AISOCAgent
 
 try:
     from analyzer.detection_engine import DetectionEngine
@@ -39,6 +40,7 @@ def analyze_logs(log_file=LOG_FILE):
     correlation_engine = CorrelationEngine()
     incident_manager = IncidentManager()
     risk_engine = RiskEngine()
+    ai_agent = AISOCAgent()
     mitre_mapper = MitreMapper()
     threat_intel = ThreatIntelligence()
     failed_attempts = {}
@@ -166,6 +168,7 @@ def analyze_logs(log_file=LOG_FILE):
         incident["risk"] = risk_result["risk"]
 
         incidents.append(incident)
+        incident["ai_investigation"] = ai_agent.investigate(incident)
 
     print("\n=== SECURITY INCIDENTS ===")
 
