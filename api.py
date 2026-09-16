@@ -52,6 +52,7 @@ def analyze():
                 "end_time": incident["end_time"],
                 "mitre_techniques": incident["mitre_techniques"],
                 "evidence": incident["evidence"]
+                "ai_investigation": incident["ai_investigation"]
             }
             for incident in result["incidents"]
         ]

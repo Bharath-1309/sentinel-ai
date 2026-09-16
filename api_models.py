@@ -29,6 +29,15 @@ class AlertResponse(BaseModel):
     targeted_users: list[str] | None = None
     threat_intelligence: ThreatIntelligenceResponse | None = None
 
+class AIInvestigationResponse(BaseModel):
+    incident_id: str
+    type: str
+    risk: str
+    source_ip: str
+    investigation_status: str
+    analysis: str | None = None
+    recommendations: list[str]    
+
 
 class IncidentResponse(BaseModel):
     incident_id: str
@@ -42,6 +51,7 @@ class IncidentResponse(BaseModel):
     status: str
     mitre_techniques: list[MitreTechnique]
     evidence: list[AlertResponse]
+    ai_investigation: AIInvestigationResponse | None = None
 
 
 class AnalysisResponse(BaseModel):
