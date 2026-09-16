@@ -79,13 +79,19 @@ RECOMMENDATIONS:
     }
 
         try:
-            response = requests.post(
-            self.api_url,
-            headers=headers,
-            params={"key": self.api_key},
-            json=payload,
-            timeout=30
-        )
+            response = None
+
+            for attempt in range(3):
+                response = requests.post(
+                    self.api_url,
+                    headers=headers,
+                    params={"key": self.api_key},
+                    json=payload,
+                    timeout=30
+                )
+
+                if response.status_code != 503:
+                    break
 
             if response.status_code != 200:
                return {
@@ -101,6 +107,18 @@ RECOMMENDATIONS:
             data = response.json()
 
             text = data["candidates"][0]["content"]["parts"][0]["text"]
+            text = text.strip()
+
+            if "RECOMMENDATIONS:" not in text:
+                return {
+                    "incident_id": incident["incident_id"],
+                    "type": incident["type"],
+                    "risk": incident["risk"],
+                    "source_ip": incident["source_ip"],
+                    "investigation_status": "COMPLETED",
+                    "analysis": text.replace("ANALYSIS:", "").strip(),
+                    "recommendations": []
+                }
 
             analysis = text
             recommendations = []
