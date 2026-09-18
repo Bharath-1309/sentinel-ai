@@ -21,6 +21,11 @@ class MitreMapper:
             "technique": "Brute Force",
             "tactic": "Credential Access"
         },
+        "Windows Password Spraying": {
+            "technique_id": "T1110.003",
+            "technique": "Password Spraying",
+            "tactic": "Credential Access"
+        },
     }
 
 
