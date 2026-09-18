@@ -1,0 +1,5 @@
+2026 Sep 16 12:00:01 Connection attempt from 192.168.1.70 to port 22
+2026 Sep 16 12:00:02 Connection attempt from 192.168.1.70 to port 80
+2026 Sep 16 12:00:03 Connection attempt from 192.168.1.70 to port 443
+2026 Sep 16 12:00:04 Connection attempt from 192.168.1.70 to port 445
+2026 Sep 16 12:00:05 Connection attempt from 192.168.1.70 to port 3389

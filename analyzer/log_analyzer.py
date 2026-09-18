@@ -10,6 +10,7 @@ from analyzer.windows_auth_detector import WindowsAuthDetector
 from analyzer.windows_password_spray_detector import (
     WindowsPasswordSprayDetector
 )
+from analyzer.network_scan_detector import NetworkScanDetector
 
 try:
     from analyzer.detection_engine import DetectionEngine
@@ -35,6 +36,20 @@ def parse_timestamp(line):
     timestamp = line[:15]
     return datetime.strptime(
         f"{datetime.now().year} {timestamp}",
+        "%Y %b %d %H:%M:%S"
+    )
+
+def parse_network_timestamp(line):
+    match = re.search(
+        r"(\d{4} \w{3} \d{2} \d{2}:\d{2}:\d{2})",
+        line
+    )
+
+    if not match:
+        return None
+
+    return datetime.strptime(
+        match.group(1),
         "%Y %b %d %H:%M:%S"
     )
 
@@ -70,12 +85,14 @@ def analyze_logs(log_file=LOG_FILE):
     ai_agent = AISOCAgent()
     mitre_mapper = MitreMapper()
     threat_intel = ThreatIntelligence()
+    network_scan_detector = NetworkScanDetector()
     failed_attempts = {}
     successful_logins = []
     suspicious_root_logins = []
     password_spray_attempts = {}
     windows_failed_attempts = {}
     windows_password_spray_attempts = {}
+    network_scan_attempts = {}
 
     with open(log_file, "r") as file:
         for line in file:
@@ -120,6 +137,7 @@ def analyze_logs(log_file=LOG_FILE):
                 windows_failed_attempts[key].append(
                     windows_event["timestamp"]
                 )
+
                 if windows_event["ip"] not in windows_password_spray_attempts:
                     windows_password_spray_attempts[windows_event["ip"]] = {
                         "usernames": set(),
@@ -135,6 +153,30 @@ def analyze_logs(log_file=LOG_FILE):
                 windows_password_spray_attempts[
                     windows_event["ip"]
                 ]["last_timestamp"] = windows_event["timestamp"]
+
+            network_match = re.search(
+                r"Connection attempt from ([\d.]+) to port (\d+)",
+                line
+            )
+
+            if network_match:
+                ip_address = network_match.group(1)
+                port = int(network_match.group(2))
+                timestamp = parse_network_timestamp(line)
+
+                if ip_address not in network_scan_attempts:
+                    network_scan_attempts[ip_address] = {
+                        "ports": set(),
+                        "last_timestamp": timestamp
+                    }
+
+                network_scan_attempts[
+                    ip_address
+                ]["ports"].add(port)
+
+                network_scan_attempts[
+                    ip_address
+                ]["last_timestamp"] = timestamp
 
 
             success_match = re.search(
@@ -212,9 +254,20 @@ def analyze_logs(log_file=LOG_FILE):
             timestamp=spray_data["last_timestamp"],
             threshold=3
         )
+        
+        if alert:
+           alerts.append(alert)
+
+    for ip_address, scan_data in network_scan_attempts.items():
+        alert = network_scan_detector.detect(
+            source_ip=ip_address,
+            target_ports=scan_data["ports"],
+            timestamp=scan_data["last_timestamp"],
+            threshold=5
+       )
 
         if alert:
-            alerts.append(alert)           
+           alerts.append(alert)         
 
     print()
     for ip_address, spray_data in password_spray_attempts.items():

@@ -26,6 +26,11 @@ class MitreMapper:
             "technique": "Password Spraying",
             "tactic": "Credential Access"
         },
+        "Network Service Scanning": {
+            "technique_id": "T1046",
+            "technique": "Network Service Scanning",
+            "tactic": "Discovery"
+        },
     }
 
 
