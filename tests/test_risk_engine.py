@@ -73,4 +73,83 @@ def test_malicious_ip_increases_risk():
     result = engine.calculate_score(alerts)
 
     assert result["score"] == 50
-    assert result["risk"] == "MEDIUM"    
+    assert result["risk"] == "MEDIUM"
+
+def test_network_scan_risk_score():
+    engine = RiskEngine()
+
+    alert = {
+        "type": "Network Service Scanning",
+        "failed_attempts": 5,
+        "successful_login": False,
+        "risk": "HIGH",
+    }
+
+    result = engine.calculate_score([alert])
+
+    assert result["score"] == 35
+    assert result["risk"] == "MEDIUM"
+
+
+def test_credential_dumping_risk_score():
+    engine = RiskEngine()
+
+    alert = {
+        "type": "Credential Dumping",
+        "failed_attempts": 2,
+        "successful_login": False,
+        "risk": "CRITICAL",
+    }
+
+    result = engine.calculate_score([alert])
+
+    assert result["score"] == 80
+    assert result["risk"] == "CRITICAL"
+
+
+def test_windows_brute_force_risk_score():
+    engine = RiskEngine()
+
+    alert = {
+        "type": "Windows Authentication Brute Force",
+        "failed_attempts": 10,
+        "successful_login": False,
+        "risk": "CRITICAL",
+    }
+
+    result = engine.calculate_score([alert])
+
+    assert result["score"] == 60
+    assert result["risk"] == "HIGH"
+
+
+def test_windows_password_spraying_risk_score():
+    engine = RiskEngine()
+
+    alert = {
+        "type": "Windows Password Spraying",
+        "failed_attempts": 5,
+        "successful_login": False,
+        "risk": "HIGH",
+    }
+
+    result = engine.calculate_score([alert])
+
+    assert result["score"] == 60
+    assert result["risk"] == "HIGH"
+
+
+def test_powershell_risk_score():
+    engine = RiskEngine()
+
+    alert = {
+        "type": "Suspicious PowerShell",
+        "failed_attempts": 0,
+        "successful_login": False,
+        "risk": "HIGH",
+    }
+
+    result = engine.calculate_score([alert])
+
+    assert result["score"] == 40
+    assert result["risk"] == "MEDIUM"        

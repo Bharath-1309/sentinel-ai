@@ -18,6 +18,33 @@ class RiskEngine:
                 if alert["failed_attempts"] >= 5:
                     score += 10
 
+            elif alert["type"] == "Network Service Scanning":
+                score += 25
+
+                if alert["failed_attempts"] >= 10:
+                    score += 10
+
+            elif alert["type"] == "Credential Dumping":
+                score += 50
+
+                if alert["failed_attempts"] >= 2:
+                    score += 10
+
+            elif alert["type"] == "Windows Authentication Brute Force":
+                score += 30
+
+                if alert["failed_attempts"] >= 10:
+                    score += 10
+
+            elif alert["type"] == "Windows Password Spraying":
+                score += 40
+
+                if alert["failed_attempts"] >= 5:
+                    score += 10
+
+            elif alert["type"] == "Suspicious PowerShell":
+                score += 30
+
             if alert["successful_login"]:
                 score += 40
 

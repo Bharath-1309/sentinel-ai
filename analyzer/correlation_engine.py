@@ -25,6 +25,32 @@ class CorrelationEngine:
                 for alert in ip_alerts
             )
 
+            has_windows_brute_force = (
+                "Windows Authentication Brute Force"
+                in alert_types
+            )
+
+            has_windows_password_spraying = (
+                "Windows Password Spraying"
+                in alert_types
+            )
+
+            has_network_scan = (
+                "Network Service Scanning"
+                in alert_types
+            )
+
+            has_credential_dumping = (
+                "Credential Dumping"
+                in alert_types
+            )
+
+            has_powershell = (
+                "Suspicious PowerShell"
+                in alert_types
+            )
+
+            # Existing SSH correlation logic
             if (
                 has_brute_force
                 and has_successful_login
@@ -46,9 +72,55 @@ class CorrelationEngine:
             elif has_brute_force:
                 incident_type = "SSH Brute Force Incident"
                 risk = max(
-                    (alert["risk"] for alert in ip_alerts),
+                    (
+                        alert["risk"]
+                        for alert in ip_alerts
+                    ),
                     key=self._risk_score
                 )
+
+            # Windows authentication attacks
+            elif (
+                has_windows_brute_force
+                and has_windows_password_spraying
+            ):
+                incident_type = "Coordinated Windows Credential Attack"
+                risk = "CRITICAL"
+
+            elif has_windows_password_spraying:
+                incident_type = "Windows Credential Attack"
+                risk = "HIGH"
+
+            elif has_windows_brute_force:
+                incident_type = "Windows Authentication Attack"
+                risk = max(
+                    (
+                        alert["risk"]
+                        for alert in ip_alerts
+                    ),
+                    key=self._risk_score
+                )
+
+            # Discovery + credential access
+            elif (
+                has_network_scan
+                and has_credential_dumping
+            ):
+                incident_type = "Potential Host Compromise"
+                risk = "CRITICAL"
+
+            elif has_network_scan:
+                incident_type = "Network Reconnaissance"
+                risk = "HIGH"
+
+            elif has_credential_dumping:
+                incident_type = "Credential Theft Activity"
+                risk = "CRITICAL"
+
+            # PowerShell execution
+            elif has_powershell:
+                incident_type = "Suspicious PowerShell Activity"
+                risk = "HIGH"
 
             else:
                 continue
