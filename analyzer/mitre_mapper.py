@@ -31,6 +31,11 @@ class MitreMapper:
             "technique": "Network Service Scanning",
             "tactic": "Discovery"
         },
+        "Credential Dumping": {
+            "technique_id": "T1003",
+            "technique": "OS Credential Dumping",
+            "tactic": "Credential Access"
+        }
     }
 
 

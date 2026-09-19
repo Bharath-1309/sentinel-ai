@@ -11,6 +11,7 @@ from analyzer.windows_password_spray_detector import (
     WindowsPasswordSprayDetector
 )
 from analyzer.network_scan_detector import NetworkScanDetector
+from analyzer.credential_dumping_detector import CredentialDumpingDetector
 
 try:
     from analyzer.detection_engine import DetectionEngine
@@ -86,6 +87,7 @@ def analyze_logs(log_file=LOG_FILE):
     mitre_mapper = MitreMapper()
     threat_intel = ThreatIntelligence()
     network_scan_detector = NetworkScanDetector()
+    credential_dumping_detector = CredentialDumpingDetector()
     failed_attempts = {}
     successful_logins = []
     suspicious_root_logins = []
@@ -93,6 +95,7 @@ def analyze_logs(log_file=LOG_FILE):
     windows_failed_attempts = {}
     windows_password_spray_attempts = {}
     network_scan_attempts = {}
+    credential_dumping_attempts = {}
 
     with open(log_file, "r") as file:
         for line in file:
@@ -179,6 +182,63 @@ def analyze_logs(log_file=LOG_FILE):
                 ]["last_timestamp"] = timestamp
 
 
+            credential_match = re.search(
+                r"Process lsass\.exe accessed by suspicious process "
+                r"procdump\.exe from ([\d.]+)",
+                line
+            )
+
+            if credential_match:
+                ip_address = credential_match.group(1)
+                timestamp = parse_network_timestamp(line)
+
+                if ip_address not in credential_dumping_attempts:
+                    credential_dumping_attempts[ip_address] = {
+                        "count": 0,
+                        "username": None,
+                        "last_timestamp": timestamp
+                    }
+
+                credential_dumping_attempts[
+                    ip_address
+                ]["count"] += 1
+
+                credential_dumping_attempts[
+                    ip_address
+                ]["last_timestamp"] = timestamp
+
+
+            credential_match = re.search(
+                r"Credential dumping activity detected from "
+                r"([\d.]+) for (\w+)",
+                line
+            )
+
+            if credential_match:
+                ip_address = credential_match.group(1)
+                username = credential_match.group(2)
+                timestamp = parse_network_timestamp(line)
+
+                if ip_address not in credential_dumping_attempts:
+                    credential_dumping_attempts[ip_address] = {
+                        "count": 0,
+                        "username": username,
+                        "last_timestamp": timestamp
+                    }
+
+                credential_dumping_attempts[
+                    ip_address
+                ]["count"] += 1
+
+                credential_dumping_attempts[
+                    ip_address
+                ]["username"] = username
+
+                credential_dumping_attempts[
+                    ip_address
+                ]["last_timestamp"] = timestamp
+
+
             success_match = re.search(
                 r"Accepted password for (\w+) from ([\d.]+)",
                 line
@@ -254,7 +314,7 @@ def analyze_logs(log_file=LOG_FILE):
             timestamp=spray_data["last_timestamp"],
             threshold=3
         )
-        
+
         if alert:
            alerts.append(alert)
 
@@ -267,7 +327,19 @@ def analyze_logs(log_file=LOG_FILE):
        )
 
         if alert:
-           alerts.append(alert)         
+           alerts.append(alert)
+
+    for ip_address, dump_data in credential_dumping_attempts.items():
+        alert = credential_dumping_detector.detect(
+            source_ip=ip_address,
+            evidence_count=dump_data["count"],
+            timestamp=dump_data["last_timestamp"],
+            username=dump_data["username"],
+            threshold=1
+        )
+
+        if alert:
+          alerts.append(alert)            
 
     print()
     for ip_address, spray_data in password_spray_attempts.items():
