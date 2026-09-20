@@ -1,0 +1,21 @@
+rule_id: DET-SSH-001
+
+name: SSH Brute Force
+
+description: >
+  Detect repeated SSH authentication failures
+  from the same source IP.
+
+event_type: authentication_failure
+
+threshold: 3
+
+window_minutes: 5
+
+severity: MEDIUM
+
+mitre_technique: T1110
+
+mitre_tactic: Credential Access
+
+enabled: true

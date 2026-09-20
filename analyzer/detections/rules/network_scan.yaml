@@ -1,0 +1,21 @@
+rule_id: DET-NET-001
+
+name: Network Service Scanning
+
+description: >
+  Detect repeated connection attempts from
+  the same source IP.
+
+event_type: network_connection_attempt
+
+threshold: 5
+
+window_minutes: 5
+
+severity: HIGH
+
+mitre_technique: T1046
+
+mitre_tactic: Discovery
+
+enabled: true
