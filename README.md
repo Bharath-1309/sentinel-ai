@@ -1,277 +1,513 @@
+@'
 # SentinelAI
 
-AI-Powered SOC Investigation & Incident Response Platform
+## AI-Powered SOC Investigation & Incident Response Platform
 
-SentinelAI is a cybersecurity platform that analyzes security logs, detects suspicious authentication activity, correlates security alerts into incidents, enriches events with threat intelligence, maps activity to MITRE ATT&CK, calculates risk, and uses AI to assist SOC investigations.
+SentinelAI is an enterprise-inspired Security Operations Center (SOC) platform that combines security event ingestion, detection engineering, alert correlation, threat hunting, UEBA, threat intelligence, case management, AI-assisted investigation, and SOAR into a unified platform.
 
-## Features
+The project demonstrates practical cybersecurity engineering concepts used in modern SOC environments.
 
-* SSH brute-force detection
-* SSH password-spraying detection
-* Suspicious root-login detection
-* Security alert correlation
-* Automated incident generation
-* Risk scoring
-* MITRE ATT&CK technique mapping
-* AbuseIPDB threat-intelligence enrichment
-* Gemini-powered AI incident investigation
-* AI-generated investigation analysis and recommendations
-* FastAPI REST API
-* Automated testing with pytest
+---
 
 ## Architecture
 
 ```text
-Security Logs
+                    Security Events
+                          |
+                          v
+                +-------------------+
+                |  Data Ingestion   |
+                | Linux / Windows / |
+                | Network Events    |
+                +---------+---------+
+                          |
+                          v
+                +-------------------+
+                | Event Normalizer  |
+                +---------+---------+
+                          |
+                          v
+                +-------------------+
+                | Detection Engine  |
+                | Detection-as-Code |
+                +---------+---------+
+                          |
+              +-----------+-----------+
+              |                       |
+              v                       v
+       +-------------+         +-------------+
+       | Correlation |         |    UEBA     |
+       |   Engine    |         | Behavioral  |
+       +------+------+         +------+------+
+              |                       |
+              +-----------+-----------+
+                          |
+                          v
+                +-------------------+
+                | Incident Engine   |
+                | Risk + MITRE      |
+                +---------+---------+
+                          |
+              +-----------+-----------+
+              |                       |
+              v                       v
+       +-------------+         +-------------+
+       | Threat Intel|         |   Hunting   |
+       | IOC Engine  |         | Query Engine|
+       +------+------+         +------+------+
+              |                       |
+              +-----------+-----------+
+                          |
+                          v
+                +-------------------+
+                | Case Management   |
+                +---------+---------+
+                          |
+                          v
+                +-------------------+
+                | AI SOC Agent      |
+                | Investigation     |
+                +---------+---------+
+                          |
+                          v
+                +-------------------+
+                | SOAR Engine       |
+                | Playbooks         |
+                +---------+---------+
+                          |
+                          v
+                +-------------------+
+                | SOC Dashboard     |
+                | FastAPI + Streamlit|
+                +-------------------+
+Core Capabilities
+Security Event Ingestion
+
+Supports a unified event model for:
+
+Linux authentication logs
+Windows security/authentication events
+Network security events
+Multiple ingestion adapters
+Detection Engineering
+
+Detection-as-Code architecture with detection rules for:
+
+SSH brute force
+SSH password spraying
+Suspicious root login
+Windows authentication attacks
+Credential dumping indicators
+Network reconnaissance/scanning
+Phishing-related activity
+Alert Correlation
+
+Correlates related security events into higher-confidence attack scenarios.
+
+Examples include:
+
+Reconnaissance → Credential Attack
+Credential Attack → Successful Login
+Credential Attack + Credential Dumping
+
+Correlation considers source IP, temporal ordering, relevant alerts, and severity.
+
+UEBA
+
+User and Entity Behavior Analytics establishes historical behavioral baselines and identifies deviations such as:
+
+Abnormally high failed-login volume
+New source IPs
+New hosts
+Unusual authentication activity
+Threat Hunting
+
+Structured hunting queries support:
+
+AND / OR conditions
+Equality and inequality operators
+String matching
+Numeric comparisons
+Time ranges
+Sorting
+Result limits
+Threat Intelligence & IOC Management
+
+Supported IOC types:
+
+IP
+Domain
+URL
+Hash
+
+Capabilities include:
+
+IOC validation
+IOC storage
+IOC lookup
+IOC enrichment
+Threat-intelligence aggregation
+Confidence scoring
+Provider evidence
+
+AbuseIPDB integration is included for IP reputation enrichment.
+
+MITRE ATT&CK
+
+Security detections can be mapped to MITRE ATT&CK techniques.
+
+Examples:
+
+Detection	Technique
+Brute Force	T1110
+Password Spraying	T1110.003
+Incident & Case Management
+
+Cases support:
+
+Incident-to-case conversion
+Severity
+Status
+Assignment
+Analyst notes
+Evidence
+IOC references
+MITRE information
+AI investigation results
+
+Case statuses:
+
+OPEN
+INVESTIGATING
+CONTAINED
+RESOLVED
+CLOSED
+AI SOC Investigation
+
+The AI SOC agent analyzes structured incident and case context and assists with:
+
+Incident analysis
+Investigation observations
+Risk context
+Findings
+Security recommendations
+
+External AI failures are handled gracefully, and automated tests use mocked AI responses.
+
+SOAR
+
+SentinelAI includes a safe SOAR engine with predefined response playbooks.
+
+Credential Compromise Response
+Investigate source
+Review authentication logs
+Reset credentials
+Collect endpoint evidence
+Preserve security logs
+Reconnaissance Response
+Investigate source
+Review network activity
+Check exploitation attempts
+Preserve security logs
+Generic Security Response
+Investigate source
+Review related logs
+Identify affected systems
+Preserve security logs
+Monitor activity
+
+SOAR actions are intentionally simulated. The project does not directly modify production endpoints, credentials, firewalls, or other external infrastructure.
+
+SOC Workflow
+Security Event
       |
       v
-Log Analyzer
+Normalization
       |
       v
-Detection Engine
-      |
-      +----> MITRE ATT&CK Mapping
-      |
-      +----> Threat Intelligence
+Detection
       |
       v
-Correlation Engine
+Correlation / UEBA
       |
       v
-Risk Engine
+Risk Assessment
       |
       v
-Incident Manager
+Threat Intelligence
       |
       v
-Gemini AI SOC Agent
+Incident
       |
       v
-Investigation & Recommendations
+Case
       |
       v
-FastAPI
-```
+AI Investigation
+      |
+      v
+SOAR Playbook
+      |
+      v
+Auditable Response
+Dashboard
 
-## Detection Capabilities
+The Streamlit SOC dashboard provides:
 
-### SSH Brute Force
+SOC overview
+Risk distribution
+Security analysis
+Phishing analysis
+Incident management
+Case management
+AI investigation
+SOAR response
+SOAR execution history
+Configured playbooks
 
-Detects repeated failed SSH authentication attempts from the same source IP within a configurable time window.
+The dashboard communicates with the FastAPI backend.
 
-### SSH Password Spraying
+REST API
 
-Detects authentication attempts against multiple usernames from the same source IP.
+SentinelAI uses FastAPI for its backend.
 
-### Potential Account Compromise
+Start the API:
 
-Correlates brute-force activity with a subsequent successful login and creates a critical incident.
-
-### Coordinated SSH Attack
-
-Correlates multiple credential-attack techniques originating from the same source IP.
-
-### Suspicious Root Login
-
-Identifies successful SSH authentication attempts involving the root account.
-
-## AI SOC Investigation
-
-SentinelAI uses the Gemini API to investigate generated security incidents.
-
-The AI investigation provides:
-
-* Incident analysis
-* Risk context
-* Investigation observations
-* Practical SOC recommendations
-
-Temporary Gemini API failures are handled with retry logic, and automated tests use mocked API responses so the test suite does not depend on external API availability.
-
-## Threat Intelligence
-
-SentinelAI integrates with AbuseIPDB to enrich source IP addresses with reputation information.
-
-The enrichment includes:
-
-* Abuse confidence score
-* Malicious IP indication
-* Threat description
-* Intelligence source
-
-API credentials are stored locally in environment variables and are not committed to the repository.
-
-## MITRE ATT&CK
-
-Detected credential attacks are mapped to MITRE ATT&CK techniques.
-
-Current mappings include:
-
-| Detection             | Technique                     | Tactic            |
-| --------------------- | ----------------------------- | ----------------- |
-| SSH Brute Force       | T1110 - Brute Force           | Credential Access |
-| SSH Password Spraying | T1110.003 - Password Spraying | Credential Access |
-
-## Risk Scoring
-
-SentinelAI calculates an incident risk score based on factors including:
-
-* Attack type
-* Number of failed attempts
-* Successful authentication
-* Alert severity
-* Threat-intelligence results
-
-The resulting score is converted into:
-
-* LOW
-* MEDIUM
-* HIGH
-* CRITICAL
-
-## REST API
-
-SentinelAI provides a FastAPI interface for security analysis.
-
-Start the API with:
-
-```bash
 uvicorn api:app --reload
-```
 
-Then open:
+API:
 
-[http://127.0.0.1:8000](http://127.0.0.1:8000)
+http://127.0.0.1:8000
 
-Interactive API documentation:
+Swagger documentation:
 
-[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+http://127.0.0.1:8000/docs
 
-## Project Structure
+Major API areas include:
 
-```text
+/analyze
+/incidents
+/phishing/analyze
+/hunting/search
+/ioc/enrich
+/ioc
+/cases
+/cases/{case_id}/investigate
+/cases/{case_id}/respond
+/soar/playbooks
+/soar/executions
+Technology Stack
+Area	Technologies
+Language	Python
+Backend	FastAPI
+Dashboard	Streamlit
+Database	SQLite
+AI	Gemini API
+Threat Intelligence	AbuseIPDB
+Security Analytics	Detection-as-Code, Correlation, UEBA
+Threat Framework	MITRE ATT&CK
+Testing	pytest
+Dependency Security	pip-audit
+Version Control	Git / GitHub
+Project Structure
 sentinel-ai/
+│
 ├── analyzer/
-│   ├── __init__.py
+│   ├── case_management/
+│   ├── correlation/
+│   ├── detections/
+│   ├── hunting/
+│   ├── ingestion/
+│   ├── soar/
+│   ├── ueba/
 │   ├── ai_agent.py
-│   ├── correlation_engine.py
+│   ├── database.py
 │   ├── detection_engine.py
 │   ├── incident_manager.py
+│   ├── ioc_engine.py
+│   ├── ioc_store.py
+│   ├── ioc_validator.py
 │   ├── log_analyzer.py
 │   ├── mitre_mapper.py
+│   ├── response_engine.py
 │   ├── risk_engine.py
-│   └── threat_intel.py
+│   ├── threat_intel.py
+│   └── threat_intel_providers.py
+│
+├── dashboard/
+│   └── app.py
+│
+├── knowledge/
 │
 ├── logs/
 │   └── auth.log
 │
 ├── tests/
-│   ├── password_spray.log
-│   ├── time_window.log
-│   ├── test_ai_agent.py
-│   ├── test_correlation_engine.py
-│   ├── test_incident_manager.py
-│   ├── test_log_analyzer.py
-│   ├── test_mitre_mapper.py
-│   ├── test_risk_engine.py
-│   └── test_threat_intel.py
 │
 ├── api.py
 ├── api_models.py
 ├── requirements.txt
 ├── .gitignore
 └── README.md
-```
-
-## Installation
+Installation
 
 Clone the repository:
 
-```bash
 git clone https://github.com/Bharath-1309/sentinel-ai.git
 cd sentinel-ai
-```
 
 Create a virtual environment:
 
-```bash
 python -m venv .venv
-```
 
 Activate it on Windows PowerShell:
 
-```powershell
 .venv\Scripts\Activate.ps1
-```
 
 Install dependencies:
 
-```bash
-pip install -r requirements.txt
-```
+python -m pip install -r requirements.txt
+Configuration
 
-## Environment Variables
+Create a .env file in the project root.
 
-Create a `.env` file in the project root:
+Example:
 
-```text
 FAILED_ATTEMPT_THRESHOLD=3
 ALERT_WINDOW_MINUTES=5
 ABUSEIPDB_API_KEY=your_abuseipdb_key
 GEMINI_API_KEY=your_gemini_key
-GEMINI_MODEL=gemini-3.8-flash
-```
+GEMINI_MODEL=your_configured_model
 
-Never commit `.env` or API keys to GitHub.
+Never commit API keys or .env files to GitHub.
 
-## Testing
+The repository already excludes .env through .gitignore.
+
+Some functionality can be tested without external API access because external responses are mocked in the automated test suite.
+
+Running SentinelAI
+Start the API
+uvicorn api:app --reload
+Start the Dashboard
+
+Open another terminal:
+
+.venv\Scripts\Activate.ps1
+streamlit run dashboard/app.py
+
+The Streamlit terminal will display the local dashboard URL.
+
+Testing
 
 Run the complete test suite:
 
-```bash
-pytest -v
-```
+python -m pytest -q tests
 
-Current test status:
+Current verified result:
 
-```text
-21 passed
-```
+270 passed
+1 warning
 
-## Technologies
+The test suite covers:
 
-* Python
-* FastAPI
-* Gemini API
-* AbuseIPDB API
-* pytest
-* MITRE ATT&CK
-* REST API
-* Git & GitHub
+API behavior
+Log ingestion
+Detection engines
+Correlation
+Threat hunting
+UEBA
+IOC validation and storage
+Threat intelligence
+Incident management
+Case management
+AI investigation
+SOAR
+Security hardening
+Security Verification
 
-## Roadmap
+Dependency vulnerabilities are checked with:
 
-Planned improvements include:
+python -m pip_audit
 
-* Additional attack detections
-* DDoS detection
-* Phishing detection
-* Web attack detection
-* Malware-related detection
-* Security knowledge RAG
-* Automated SOC tool calling
-* Incident report generation
-* Web-based SOC dashboard
-* Docker deployment
-* Cloud deployment
-* CI/CD pipeline
-* Monitoring and observability
-* AI security testing
-* Prompt-injection defenses
-* RAG poisoning defenses
-* Tool-abuse protection
-* Role-based access control
+Current verified result:
 
-## Project Goal
+No known vulnerabilities found
 
-The goal of SentinelAI is to demonstrate how security monitoring, detection engineering, threat intelligence, incident response, and AI-assisted investigation can be combined into a practical SOC platform.
+Dependency consistency:
+
+python -m pip check
+
+Current verified result:
+
+No broken requirements found.
+
+Security-hardening tests include handling of:
+
+SQL-injection-style input
+Command-injection-style input
+Path-traversal-style input
+Invalid JSON
+Attacker-controlled response values
+Unknown API routes
+Security Design Principles
+
+SentinelAI follows several defensive engineering principles:
+
+Treat attacker-controlled input as data.
+Validate structured API input.
+Avoid executing user-controlled commands.
+Keep credentials outside source control.
+Separate detection from response.
+Maintain auditable investigation records.
+Simulate potentially disruptive SOAR actions.
+Test security-sensitive inputs.
+Audit project dependencies.
+Limitations
+
+SentinelAI is a portfolio-scale SOC platform and is not intended to replace a production enterprise SIEM/SOAR deployment.
+
+Current limitations include:
+
+SQLite-based local persistence
+Local development deployment
+Simulated SOAR actions
+External AI dependency for AI-assisted investigation
+Threat intelligence depends on configured providers
+No production-scale distributed event streaming
+No enterprise identity/RBAC implementation
+Future Improvements
+
+Potential future extensions include:
+
+Additional detection rules
+Additional threat-intelligence providers
+Production event streaming
+Enterprise authentication and RBAC
+Distributed storage
+Containerized deployment
+CI/CD security testing
+Additional endpoint telemetry
+Production observability
+Project Goal
+
+SentinelAI demonstrates how modern SOC capabilities can be combined into a single security platform:
+
+Security Monitoring
+        +
+Detection Engineering
+        +
+Threat Hunting
+        +
+UEBA
+        +
+Threat Intelligence
+        +
+Incident & Case Management
+        +
+AI-Assisted Investigation
+        +
+SOAR
+        =
+Unified SOC Platform
+
+The project focuses on practical cybersecurity engineering, security analytics, incident response, automation, API development, AI-assisted investigation, and secure software design.
