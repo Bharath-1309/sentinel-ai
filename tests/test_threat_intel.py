@@ -60,3 +60,71 @@ def test_abuseipdb_failure_returns_safe_result(monkeypatch):
     assert result["malicious"] is False
     assert result["confidence"] == 0
     assert result["source"] == "AbuseIPDB (unavailable)"
+
+
+def test_lookup_aggregated(monkeypatch):
+
+    threat_intel = ThreatIntelligence()
+
+    threat_intel.api_key = "test-api-key"
+
+    class MockResponse:
+
+        status_code = 200
+
+        def json(self):
+            return {
+                "data": {
+                    "abuseConfidenceScore": 85
+                }
+            }
+
+    def mock_get(*args, **kwargs):
+        return MockResponse()
+
+    monkeypatch.setattr(
+        "analyzer.threat_intel.requests.get",
+        mock_get,
+    )
+
+    result = threat_intel.lookup_aggregated(
+        "8.8.8.8",
+        "ip",
+    )
+
+    assert result is not None
+    assert result.value == "8.8.8.8"
+    assert result.malicious is True
+    assert result.confidence == 85
+    assert result.source == "AbuseIPDB"
+
+
+def test_lookup_returns_provider_results(monkeypatch):
+
+    threat_intel = ThreatIntelligence()
+
+    threat_intel.api_key = "test-api-key"
+
+    class MockResponse:
+
+        status_code = 200
+
+        def json(self):
+            return {
+                "data": {
+                    "abuseConfidenceScore": 70
+                }
+            }
+
+    monkeypatch.setattr(
+        "analyzer.threat_intel.requests.get",
+        lambda *args, **kwargs: MockResponse(),
+    )
+
+    results = threat_intel.lookup(
+        "8.8.8.8",
+        "ip",
+    )
+
+    assert len(results) == 1
+    assert results[0].confidence == 70

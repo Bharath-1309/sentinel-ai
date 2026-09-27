@@ -93,19 +93,27 @@ RECOMMENDATIONS:
     }
 
         try:
-            response = None
-
-            for attempt in range(3):
-                response = requests.post(
-                    self.api_url,
-                    headers=headers,
-                    params={"key": self.api_key},
-                    json=payload,
-                    timeout=30
-                )
-
-                if response.status_code != 503:
-                    break
+            response = requests.post(
+                self.api_url,
+                headers=headers,
+                params={"key": self.api_key},
+                json=payload,
+                timeout=30
+            )
+            
+            if response.status_code == 429:
+                return {
+                    "incident_id": incident["incident_id"],
+                    "type": incident["type"],
+                    "risk": incident["risk"],
+                    "source_ip": incident["source_ip"],
+                    "investigation_status": "UNAVAILABLE",
+                    "analysis": (
+                        "Gemini investigation unavailable because "
+                        "the API quota has been exceeded."
+                    ),
+                    "recommendations": []
+                }
 
             if response.status_code != 200:
                return {

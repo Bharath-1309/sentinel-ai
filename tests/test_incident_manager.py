@@ -77,3 +77,32 @@ def test_create_incident():
     assert len(incident["mitre_techniques"]) == 1
     assert incident["mitre_techniques"][0]["technique_id"] == "T1110"
     assert incident["mitre_techniques"][0]["technique"] == "Brute Force"
+
+def test_incident_can_include_response_playbook():
+
+    incident = {
+        "incident_id": "INC-001",
+        "type": "Credential Theft Activity",
+        "risk": "CRITICAL",
+        "alert_count": 1,
+        "start_time": None,
+        "end_time": None,
+        "status": "OPEN",
+        "mitre_techniques": [],
+        "evidence": [],
+        "response_playbook": {
+            "incident_id": "INC-001",
+            "incident_type": "Credential Theft Activity",
+            "severity": "CRITICAL",
+            "actions": [
+                "Isolate the affected endpoint",
+                "Reset potentially compromised credentials"
+            ]
+        }
+    }
+
+    assert incident["response_playbook"]["severity"] == "CRITICAL"
+    assert (
+        "Isolate the affected endpoint"
+        in incident["response_playbook"]["actions"]
+    )

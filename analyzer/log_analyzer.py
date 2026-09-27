@@ -17,6 +17,8 @@ from analyzer.response_engine import ResponseEngine
 from analyzer.database import initialize_database, save_incident
 from analyzer.ingestion.pipeline import LinuxIngestionPipeline
 from analyzer.detections.service import DetectionService
+from analyzer.correlation.engine import AdvancedCorrelationEngine
+from analyzer.correlation.adapter import (detection_alerts_to_correlation_alerts,existing_alerts_to_correlation_alerts,)
 
 try:
     from analyzer.detection_engine import DetectionEngine
@@ -104,6 +106,7 @@ def analyze_logs(log_file=LOG_FILE):
     windows_auth_detector = WindowsAuthDetector()
     windows_password_spray_detector = WindowsPasswordSprayDetector()
     correlation_engine = CorrelationEngine()
+    advanced_correlation_engine = AdvancedCorrelationEngine()
     incident_manager = IncidentManager()
     risk_engine = RiskEngine()
     ai_agent = AISOCAgent()
@@ -133,6 +136,7 @@ def analyze_logs(log_file=LOG_FILE):
     linux_pipeline = LinuxIngestionPipeline()
 
     normalized_events = linux_pipeline.ingest(log_file)
+
     detection_alerts = detection_service.detect(normalized_events)
 
     # Convert normalized Linux events into the structures
@@ -533,6 +537,24 @@ def analyze_logs(log_file=LOG_FILE):
                 alert["ip"]
             )
         )
+
+    # ---------------------------------------------------------
+    # ADVANCED CORRELATION
+    # ---------------------------------------------------------
+
+    correlation_alerts = detection_alerts_to_correlation_alerts(
+        detection_alerts
+    )
+
+    correlation_alerts.extend(
+    existing_alerts_to_correlation_alerts(alerts)
+    )
+
+    advanced_correlation_results = advanced_correlation_engine.correlate(
+        correlation_alerts
+    )
+
+    print("Advanced Correlation Results:", advanced_correlation_results)
 
     # ---------------------------------------------------------
     # CORRELATION
